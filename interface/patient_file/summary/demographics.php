@@ -27,6 +27,10 @@
 
 require_once("../../globals.php");
 
+// Hide specific dashboard sections per user request
+$GLOBALS['hide_billing_widget'] = true;
+$GLOBALS['amendments'] = false;
+
 require_once("$srcdir/lists.inc.php");
 require_once("$srcdir/patient.inc.php");
 require_once("$srcdir/options.inc.php");
@@ -1811,32 +1815,33 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             $appts[] = $row;
                         }
 
-                        if ($resNotNull) {
-                            // Show Recall if one exists
-                            $query = sqlStatement("SELECT * FROM `medex_recalls` WHERE `r_pid` = ?", [(int)$pid]);
-                            $recallArr = [];
-                            $count2 = 0;
-                            while ($result2 = sqlFetchArray($query)) {
-                                //tabYourIt('recall', 'main/messages/messages.php?go=' + choice);
-                                //parent.left_nav.loadFrame('1', tabNAME, url);
-                                $recallArr[] = [
-                                    'date' => $result2['r_eventDate'],
-                                    'reason' => $result2['r_reason'],
-                                ];
-                                $count2++;
-                            }
-                            $id = "recall_ps_expand";
-                            $dispatchResult = $ed->dispatch(new CardRenderEvent('recall'), CardRenderEvent::EVENT_HANDLE);
-                            echo $twig->getTwig()->render('patient/card/recall.html.twig', [
-                                'title' => xl('Recall'),
-                                'id' => $id,
-                                'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
-                                'recalls' => $recallArr,
-                                'recallsAvailable' => ($count < 1 && empty($count2)) ? false : true,
-                                'prependedInjection' => $dispatchResult->getPrependedInjection(),
-                                'appendedInjection' => $dispatchResult->getAppendedInjection(),
-                            ]);
-                        }
+                        // Recalls card hidden per user request
+                        // if ($resNotNull) {
+                        //     // Show Recall if one exists
+                        //     $query = sqlStatement("SELECT * FROM `medex_recalls` WHERE `r_pid` = ?", [(int)$pid]);
+                        //     $recallArr = [];
+                        //     $count2 = 0;
+                        //     while ($result2 = sqlFetchArray($query)) {
+                        //         //tabYourIt('recall', 'main/messages/messages.php?go=' + choice);
+                        //         //parent.left_nav.loadFrame('1', tabNAME, url);
+                        //         $recallArr[] = [
+                        //             'date' => $result2['r_eventDate'],
+                        //             'reason' => $result2['r_reason'],
+                        //         ];
+                        //         $count2++;
+                        //     }
+                        //     $id = "recall_ps_expand";
+                        //     $dispatchResult = $ed->dispatch(new CardRenderEvent('recall'), CardRenderEvent::EVENT_HANDLE);
+                        //     echo $twig->getTwig()->render('patient/card/recall.html.twig', [
+                        //         'title' => xl('Recall'),
+                        //         'id' => $id,
+                        //         'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
+                        //         'recalls' => $recallArr,
+                        //         'recallsAvailable' => ($count < 1 && empty($count2)) ? false : true,
+                        //         'prependedInjection' => $dispatchResult->getPrependedInjection(),
+                        //         'appendedInjection' => $dispatchResult->getAppendedInjection(),
+                        //     ]);
+                        // }
                     } // End of Appointments Widget.
 
                     /* Widget that shows recurrences for appointments. */
