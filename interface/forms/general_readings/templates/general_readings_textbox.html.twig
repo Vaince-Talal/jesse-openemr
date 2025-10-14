@@ -1,0 +1,28 @@
+{% if field.hide %}
+<tr class="hide">
+    {%else %}
+<tr>
+{% endif %}
+    <td class="graph" id="{{ field.input|attr }}"><span class="general-readings-title">{{ field.title|text }}</span> {% if field.codes is not empty %}<small>({{ field.codes|text }})</small>{% endif %}</td>
+    <td>{{ field.unit|text }}</td>
+
+    <td class='currentvalues p-2'>
+        {% if field.precision is defined and field.precision > 0 %}
+        <input type="number" class="form-control skip-template-editor" size='5' name='{{ field.input|attr }}' id='{{ field.input|attr }}_input'
+               step="0.01" min="0" max="10000"/>
+        {% else %}
+        <input type="number" class="form-control skip-template-editor" size='5' name='{{ field.input|attr }}' id='{{ field.input|attr }}_input'
+               min="0" max="10"/>
+        {% endif %}
+    </td>
+    
+    {% for reading in general_readings_data %}
+        <td class='historicalvalues d-none d-md-table-cell'>
+            {% if field.precision is defined and field.precision > 0 %}
+                {{ attribute(reading, field.generalReadingsValue)|number_format(field.precision) }}
+            {% else %}
+                {{ attribute(reading, field.generalReadingsValue) }}
+            {% endif %}
+        </td>
+    {% endfor %}
+</tr>

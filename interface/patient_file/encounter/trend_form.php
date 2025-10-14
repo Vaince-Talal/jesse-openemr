@@ -134,6 +134,8 @@ $(function () {
 <?php if ($is_lbf) { ?>
   // For LBF the <td> has an id of label_id_$fieldid
   $(".graph").on("click", function(e){ show_graph(<?php echo js_escape($formname); ?>, this.id.substring(9), $(this).text()) });
+<?php } elseif ($formname == 'general_readings') { ?>
+  $(".graph").on("click", function(e){ show_graph('form_general_readings', this.id, $(this).text()) });
 <?php } else { ?>
   $(".graph").on("click", function(e){ show_graph('form_vitals', this.id, $(this).text()) });
 <?php } ?>
@@ -148,11 +150,13 @@ $(function () {
     }
   );
 
-  // show blood pressure graph by default
+  // show default graph
 <?php if ($is_lbf) { ?>
     <?php if (!empty($default)) { ?>
   show_graph(<?php echo js_escape($formname); ?>,<?php echo js_escape($default['field_id']); ?>,<?php echo js_escape($default['title']); ?>);
 <?php } ?>
+<?php } elseif ($formname == 'general_readings') { ?>
+  show_graph('form_general_readings','daily_fluid_intake','');
 <?php } else { ?>
   show_graph('form_vitals','bps','');
 <?php } ?>

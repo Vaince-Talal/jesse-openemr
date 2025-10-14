@@ -347,6 +347,10 @@ function image_widget($doc_id, $doc_catg): void
 $tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'vitals' AND state = 1");
 $vitals_is_registered = $tmp['count'];
 
+// Determine if the General Readings form is in use for this site.
+$tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'general_readings' AND state = 1");
+$general_readings_is_registered = $tmp['count'];
+
 // Get patient/employer/insurance information.
 //
 $result = getPatientData($pid, "*, DATE_FORMAT(DOB,'%Y-%m-%d') as DOB_YMD");
@@ -621,6 +625,11 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             <?php if ($vitals_is_registered && AclMain::aclCheckCore('patients', 'med')) { ?>
             // Initialize the Vitals form if it is registered and user is authorized.
             placeHtml("vitals_fragment.php", "vitals_ps_expand");
+            <?php } ?>
+            
+            // Initialize the General Readings form if user is authorized.
+            <?php if (AclMain::aclCheckCore('patients', 'med')) { ?>
+            placeHtml("general_readings_fragment.php", "general_readings_ps_expand");
             <?php } ?>
 
             <?php if ($GLOBALS['enable_cdr'] && $GLOBALS['enable_cdr_crw']) { ?>
@@ -1453,6 +1462,34 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             echo $twig->getTwig()->render('patient/card/loader.html.twig', $viewArgs);
                         }
                     endif; // end vitals
+
+                    // General Readings Card
+                    if ($general_readings_is_registered && AclMain::aclCheckCore('patients', 'med')) :
+                        $dispatchResult = $ed->dispatch(new CardRenderEvent('general_readings'), CardRenderEvent::EVENT_HANDLE);
+                        // general readings expand collapse widget
+                        // check to see if any general readings exist
+                        $existGeneralReadings = sqlQuery("SELECT * FROM form_general_readings WHERE pid=?", [$pid]);
+                        
+                        $id = "general_readings_ps_expand";
+                        $btnLabel = $existGeneralReadings ? 'Trend' : 'Add';
+                        $btnLink = $existGeneralReadings ? "../encounter/trend_form.php?formname=general_readings&context=dashboard" : "../../forms/general_readings/new.php";
+                        
+                        $viewArgs = [
+                            'title' => xl('General Readings'),
+                            'id' => $id,
+                            'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
+                            'btnLabel' => $btnLabel,
+                            'btnLink' => $btnLink,
+                            'linkMethod' => 'html',
+                            'bodyClass' => 'collapse show',
+                            'auth' => true, // Always show the button
+                            'prependedInjection' => $dispatchResult->getPrependedInjection(),
+                            'appendedInjection' => $dispatchResult->getAppendedInjection(),
+                        ];
+                        if (!in_array('card_general_readings', $hiddenCards)) {
+                            echo $twig->getTwig()->render('patient/card/loader.html.twig', $viewArgs);
+                        }
+                    endif; // end general readings
 
                     // if anyone wants to render anything after the patient demographic list
                     $GLOBALS["kernel"]->getEventDispatcher()->dispatch(new RenderEvent($pid), RenderEvent::EVENT_SECTION_LIST_RENDER_AFTER, 10);
