@@ -1468,21 +1468,20 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                         $dispatchResult = $ed->dispatch(new CardRenderEvent('general_readings'), CardRenderEvent::EVENT_HANDLE);
                         // general readings expand collapse widget
                         // check to see if any general readings exist
-                        $existGeneralReadings = sqlQuery("SELECT * FROM form_general_readings WHERE pid=?", [$pid]);
+                        $existGeneralReadings = sqlQuery("SELECT COUNT(*) as count FROM form_general_readings WHERE pid=?", [$pid]);
+                        $hasData = ($existGeneralReadings['count'] > 0);
                         
                         $id = "general_readings_ps_expand";
-                        $btnLabel = $existGeneralReadings ? 'Trend' : 'Add';
-                        $btnLink = $existGeneralReadings ? "../encounter/trend_form.php?formname=general_readings&context=dashboard" : "../../forms/general_readings/new.php";
                         
                         $viewArgs = [
                             'title' => xl('General Readings'),
                             'id' => $id,
                             'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
-                            'btnLabel' => $btnLabel,
-                            'btnLink' => $btnLink,
+                            'btnLabel' => '', // Let the fragment handle the buttons
+                            'btnLink' => '',
                             'linkMethod' => 'html',
                             'bodyClass' => 'collapse show',
-                            'auth' => true, // Always show the button
+                            'auth' => true,
                             'prependedInjection' => $dispatchResult->getPrependedInjection(),
                             'appendedInjection' => $dispatchResult->getAppendedInjection(),
                         ];

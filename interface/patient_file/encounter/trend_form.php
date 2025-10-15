@@ -98,11 +98,16 @@ function show_graph(table_graph, name_graph, title_graph)
             {
                 title: returnData.title,
                 delimiter: '\t',
-                xRangePad: 20,
-                yRangePad: 20,
-                width: 480,
-                height: 320,
-                xlabel: xlabel_translate
+                xRangePad: 70,
+                yRangePad: 70,
+                width: 600,
+                height: 600,
+                xlabel: 'Date',
+                includeZero: true,
+                yAxisRangePad: 10,
+                drawPoints: true,
+                pointSize: 4,
+                strokeWidth: 2
             }
         );
 
@@ -156,7 +161,7 @@ $(function () {
   show_graph(<?php echo js_escape($formname); ?>,<?php echo js_escape($default['field_id']); ?>,<?php echo js_escape($default['title']); ?>);
 <?php } ?>
 <?php } elseif ($formname == 'general_readings') { ?>
-  show_graph('form_general_readings','daily_fluid_intake','');
+  show_graph('form_general_readings','walking','');
 <?php } else { ?>
   show_graph('form_vitals','bps','');
 <?php } ?>

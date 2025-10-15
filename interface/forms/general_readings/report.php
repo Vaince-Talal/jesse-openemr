@@ -137,7 +137,7 @@ function general_readings_report($pid, $encounter, $cols, $id, $print = true)
                 $key == "user" || $key == "groupname" ||
                 $key == "authorized" || $key == "activity" ||
                 $key == "date" || $value == "" ||
-                $value == "0000-00-00 00:00:00" || $value == "0.0"
+                $value == "0000-00-00 00:00:00"
             ) {
                 // skip certain data
                 continue;

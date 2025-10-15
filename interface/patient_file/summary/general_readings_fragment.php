@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !CsrfUtils::verifyCsrfToken($_POST[
 <div id='general_readings'><!--outer div-->
 <?php
 //retrieve most recent set of general readings.
-$result = sqlQuery("SELECT FORM_GENERAL_READINGS.date, FORM_GENERAL_READINGS.id FROM form_general_readings AS FORM_GENERAL_READINGS LEFT JOIN forms AS FORMS ON FORM_GENERAL_READINGS.id = FORMS.form_id WHERE FORM_GENERAL_READINGS.pid=? AND FORMS.deleted != '1' ORDER BY FORM_GENERAL_READINGS.date DESC", [$pid]);
+$result = sqlQuery("SELECT date, id FROM form_general_readings WHERE pid=? ORDER BY date DESC LIMIT 1", [$pid]);
 
 if (!$result) { //If there are no general readings recorded
     ?>
@@ -48,6 +48,10 @@ if (!$result) { //If there are no general readings recorded
     ?>  <span class='text'>
   <br />
   <a href='../encounter/trend_form.php?formname=general_readings' onclick='top.restoreSession()'><?php echo xlt('Click here to view and graph all general readings.');?></a>
+  <br /><br />
+  <a href='../../forms/general_readings/new.php' class='btn btn-primary' style='padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;'>
+    <?php echo xlt('Add General Readings'); ?>
+  </a>
   </span><?php
 } ?>
 </div>

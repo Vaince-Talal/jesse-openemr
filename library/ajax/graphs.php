@@ -83,8 +83,8 @@ function graphsGetValues($name)
             "fe.pid = f.pid AND fe.encounter = f.encounter AND " .
             "ld.form_id = f.form_id AND " .
             "ld.field_id = ? AND " .
-            "ld.field_value != '0' " .
-            "ORDER BY date",
+            "ld.field_value IS NOT NULL " .
+            "ORDER BY date ASC LIMIT 7",
             [$pid, $table, $name]
         );
     } else {
@@ -95,8 +95,8 @@ function graphsGetValues($name)
             escape_sql_column_name($name, [$table]) . ", " .
         "date " .
         "FROM " . escape_table_name($table) . " " .
-        "WHERE " . escape_sql_column_name($name, [$table]) . " != 0 " .
-        "AND pid = ? ORDER BY date", [$pid]);
+        "WHERE " . escape_sql_column_name($name, [$table]) . " IS NOT NULL " .
+        "AND pid = ? ORDER BY date ASC LIMIT 7", [$pid]);
     }
 
     return $values;
@@ -227,8 +227,8 @@ if ($is_lbf) {
 // Prepare data
 $data = [];
 while ($row = sqlFetchArray($values)) {
-    if ($row["$name"]) {
-        $x = $row['date'];
+    if ($row["$name"] !== null && $row["$name"] !== '') {
+        $x = $row['date']; // Use actual date
         if ($multiplier ?? null) {
             // apply unit conversion multiplier
             $y = $row["$name"] * $multiplier;
@@ -247,8 +247,8 @@ while ($row = sqlFetchArray($values)) {
 if ($isBP) {
   //set up the other blood pressure line
     while ($row = sqlFetchArray($values_alt)) {
-        if ($row["$name_alt"]) {
-            $x = $row['date'];
+        if ($row["$name_alt"] !== null && $row["$name_alt"] !== '') {
+            $x = $row['date']; // Use actual date
             if ($multiplier ?? null) {
                 // apply unit conversion multiplier
                 $y = $row["$name_alt"] * $multiplier;

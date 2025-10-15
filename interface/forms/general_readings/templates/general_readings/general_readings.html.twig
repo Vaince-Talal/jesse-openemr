@@ -11,6 +11,15 @@
 <head>
     <title>{{ "General Readings"|xlt }}</title>
     {{ setupHeader(["datetime-picker"]) }}
+    <style>
+        .graph {
+            color: #0000cc;
+            cursor: pointer;
+        }
+        .graph:hover {
+            color: #ff5555;
+        }
+    </style>
 </head>
 <body class="body_top">
 
@@ -115,7 +124,7 @@
                     <td><input type="number" name="sponge_bath" value="{{ general_readings.sponge_bath|attr }}" min="0" max="5"></td>
                 </tr>
                 <tr>
-                    <td>{{ "Walking (0-10)"|xlt }}:</td>
+                    <td class="graph" id="walking"><span class="general-readings-title">{{ "Walking (0-10)"|xlt }}</span></td>
                     <td><input type="number" name="walking" value="{{ general_readings.walking|attr }}" min="0" max="10"></td>
                 </tr>
                 <tr>

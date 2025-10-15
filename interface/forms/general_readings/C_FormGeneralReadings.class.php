@@ -55,7 +55,7 @@ class C_FormGeneralReadings
     public function trend_view()
     {
         // Get all general readings for this patient
-        $sql = "SELECT * FROM form_general_readings WHERE pid = ? ORDER BY date DESC";
+        $sql = "SELECT * FROM form_general_readings WHERE pid = ? ORDER BY date ASC LIMIT 7";
         $results = sqlStatement($sql, [$GLOBALS['pid']]);
         
         $general_readings_data = [];
