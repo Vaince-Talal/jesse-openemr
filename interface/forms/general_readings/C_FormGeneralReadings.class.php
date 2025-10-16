@@ -54,14 +54,17 @@ class C_FormGeneralReadings
 
     public function trend_view()
     {
-        // Get all general readings for this patient
-        $sql = "SELECT * FROM form_general_readings WHERE pid = ? ORDER BY date ASC LIMIT 7";
+        // Get the most recent 30 general readings for this patient
+        $sql = "SELECT * FROM form_general_readings WHERE pid = ? ORDER BY date DESC LIMIT 30";
         $results = sqlStatement($sql, [$GLOBALS['pid']]);
         
         $general_readings_data = [];
         while ($row = sqlFetchArray($results)) {
             $general_readings_data[] = $row;
         }
+        
+        // Reverse the array to show oldest to newest for display
+        $general_readings_data = array_reverse($general_readings_data);
         
         // Define fields array like vitals does
         $generalReadingsFields = [
@@ -251,6 +254,42 @@ class C_FormGeneralReadings
         return $twig->render("general_readings/general_readings.html.twig", $data);
     }
 
+    public function delete_action()
+    {
+        // Verify CSRF token
+        if (!CsrfUtils::verifyCsrfToken($_POST['csrf_token_form'])) {
+            CsrfUtils::csrfNotVerified();
+        }
+
+        $id = $_POST['id'] ?? 0;
+        
+        if ($id > 0) {
+            // Delete the general readings entry
+            $sql = "DELETE FROM form_general_readings WHERE id = ? AND pid = ?";
+            $result = sqlStatement($sql, [$id, $GLOBALS['pid']]);
+            
+            if ($result) {
+                // Redirect back to dashboard with success message
+                $success_msg = xl("General Readings entry deleted successfully.");
+                $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php";
+                header("Location: " . $redirect_url . "?success=" . urlencode($success_msg));
+                exit;
+            } else {
+                // Redirect back to dashboard with error message
+                $error_msg = xl("Failed to delete General Readings entry.");
+                $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php";
+                header("Location: " . $redirect_url . "?error=" . urlencode($error_msg));
+                exit;
+            }
+        } else {
+            // Redirect back to dashboard with error message
+            $error_msg = xl("Invalid entry ID for deletion.");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php";
+            header("Location: " . $redirect_url . "?error=" . urlencode($error_msg));
+            exit;
+        }
+    }
+
     public function save_action()
     {
         // Verify CSRF token
@@ -293,9 +332,17 @@ class C_FormGeneralReadings
         ]);
 
         if ($result) {
-            return "<script>alert('General Readings saved successfully!'); window.location.href='" . $GLOBALS['form_exit_url'] . "';</script>";
+            // Redirect to dashboard with success message
+            $success_msg = xl("General Readings saved successfully!");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php";
+            header("Location: " . $redirect_url . "?success=" . urlencode($success_msg));
+            exit;
         } else {
-            return "<script>alert('Error saving General Readings!'); window.history.back();</script>";
+            // Redirect back with error message
+            $error_msg = xl("Error saving General Readings!");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/forms/general_readings/new.php";
+            header("Location: " . $redirect_url . "?error=" . urlencode($error_msg));
+            exit;
         }
     }
 }

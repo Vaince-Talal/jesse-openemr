@@ -10,9 +10,9 @@
  * @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
  */
 
-require_once("../../globals.php");
-
 use OpenEMR\Common\Csrf\CsrfUtils;
+
+require_once("../../globals.php");
 
 // Only check CSRF if this is a POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !CsrfUtils::verifyCsrfToken($_POST["csrf_token_form"])) {
@@ -52,6 +52,12 @@ if (!$result) { //If there are no general readings recorded
   <a href='../../forms/general_readings/new.php' class='btn btn-primary' style='padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;'>
     <?php echo xlt('Add General Readings'); ?>
   </a>
+  <br /><br />
+  <form method="post" action="../../forms/general_readings/delete.php" style="display: inline;" onsubmit="return confirm('<?php echo xla('Are you sure you want to delete this entry?'); ?>')">
+    <input type="hidden" name="csrf_token_form" value="<?php echo attr(CsrfUtils::collectCsrfToken()); ?>">
+    <input type="hidden" name="id" value="<?php echo attr($result['id']); ?>">
+    <button type="submit" class="btn btn-danger btn-sm" style="padding: 5px 10px;"><?php echo xlt('Delete Most Recent Entry'); ?></button>
+  </form>
   </span><?php
 } ?>
 </div>

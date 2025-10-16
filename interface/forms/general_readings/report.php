@@ -36,39 +36,63 @@ if (isset($_GET['format']) && isset($_GET['pid'])) {
         header('Content-Type: text/html; charset=utf-8');
         echo "<!DOCTYPE html><html><head><title>General Readings Report</title>";
         echo "<style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            h1 { color: #333; }
-            @media print { body { margin: 0; } }
+            body { font-family: Arial, sans-serif; margin: 10px; font-size: 10px; }
+            table { border-collapse: collapse; width: 100%; margin-top: 20px; table-layout: fixed; }
+            th, td { border: 1px solid #ddd; padding: 4px; text-align: left; font-size: 9px; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            h1 { color: #333; font-size: 16px; margin-bottom: 10px; }
+            .date-col { width: 80px; }
+            .number-col { width: 60px; }
+            .note-col { width: 120px; }
+            @media print { 
+                body { margin: 0; }
+                @page { size: A4 landscape; margin: 0.5in; }
+            }
         </style></head><body>";
         echo "<h1>General Readings Report for " . htmlspecialchars($patient_name) . "</h1>";
         echo "<p>Generated on: " . date('Y-m-d H:i:s') . "</p>";
         
         if (!empty($general_readings_data)) {
             echo "<table>";
-            echo "<tr><th>Date</th><th>Daily Fluid Intake (ml)</th><th>Daily Protein Intake (grams)</th><th>Shower (0-5)</th><th>Sponge Bath (0-5)</th><th>Walking (0-10)</th><th>AM Fasting Glucose (mg/dL)</th><th>HS Fasting Glucose (mg/dL)</th><th>Energy (0-10)</th><th>Sleep Pattern (0-10)</th><th>Stress Level/Mood (0-10)</th><th>Pain (0-10)</th><th>Abdominal Pain (0-10)</th><th>Appetite (0-10)</th><th>Bowel Movements (0-10)</th><th>Fatigue (0-10)</th><th>Notes</th></tr>";
+            echo "<tr>
+                <th class='date-col'>Date</th>
+                <th class='number-col'>Fluid (ml)</th>
+                <th class='number-col'>Protein (g)</th>
+                <th class='number-col'>Shower</th>
+                <th class='number-col'>Sponge</th>
+                <th class='number-col'>Walking</th>
+                <th class='number-col'>AM Glucose</th>
+                <th class='number-col'>HS Glucose</th>
+                <th class='number-col'>Energy</th>
+                <th class='number-col'>Sleep</th>
+                <th class='number-col'>Stress</th>
+                <th class='number-col'>Pain</th>
+                <th class='number-col'>Ab Pain</th>
+                <th class='number-col'>Appetite</th>
+                <th class='number-col'>Bowel</th>
+                <th class='number-col'>Fatigue</th>
+                <th class='note-col'>Notes</th>
+            </tr>";
             
             foreach ($general_readings_data as $reading) {
                 echo "<tr>";
-                echo "<td>" . htmlspecialchars($reading['date']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['daily_fluid_intake']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['daily_protein_intake']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['shower']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['sponge_bath']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['walking']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['am_fasting_glucose']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['hs_fasting_glucose']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['energy']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['sleep_pattern']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['stress_level']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['pain']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['abdominal_pain']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['appetite']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['bowel_movements']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['fatigue']) . "</td>";
-                echo "<td>" . htmlspecialchars($reading['note'] ?? '') . "</td>";
+                echo "<td class='date-col'>" . htmlspecialchars($reading['date']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['daily_fluid_intake']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['daily_protein_intake']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['shower']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['sponge_bath']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['walking']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['am_fasting_glucose']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['hs_fasting_glucose']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['energy']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['sleep_pattern']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['stress_level']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['pain']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['abdominal_pain']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['appetite']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['bowel_movements']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['fatigue']) . "</td>";
+                echo "<td class='note-col'>" . htmlspecialchars($reading['note'] ?? '') . "</td>";
                 echo "</tr>";
             }
             echo "</table>";

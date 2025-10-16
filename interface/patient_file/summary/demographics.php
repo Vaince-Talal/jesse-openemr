@@ -1038,6 +1038,20 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
 <body class="mt-1 patient-demographic bg-light">
 
     <?php
+    // Display success/error messages
+    if (isset($_GET['success'])) {
+        echo '<div class="alert alert-success" style="margin: 20px; padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;">';
+        echo text($_GET['success']);
+        echo '</div>';
+    }
+    if (isset($_GET['error'])) {
+        echo '<div class="alert alert-danger" style="margin: 20px; padding: 15px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 4px;">';
+        echo text($_GET['error']);
+        echo '</div>';
+    }
+    ?>
+
+    <?php
     // Create and fire the patient demographics view event
     $viewEvent = new ViewEvent($pid);
     $viewEvent = $GLOBALS["kernel"]->getEventDispatcher()->dispatch($viewEvent, ViewEvent::EVENT_HANDLE, 10);

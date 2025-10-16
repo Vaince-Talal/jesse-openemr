@@ -84,7 +84,7 @@ function graphsGetValues($name)
             "ld.form_id = f.form_id AND " .
             "ld.field_id = ? AND " .
             "ld.field_value IS NOT NULL " .
-            "ORDER BY date ASC LIMIT 7",
+            "ORDER BY date DESC LIMIT 30",
             [$pid, $table, $name]
         );
     } else {
@@ -96,7 +96,7 @@ function graphsGetValues($name)
         "date " .
         "FROM " . escape_table_name($table) . " " .
         "WHERE " . escape_sql_column_name($name, [$table]) . " IS NOT NULL " .
-        "AND pid = ? ORDER BY date ASC LIMIT 7", [$pid]);
+        "AND pid = ? ORDER BY date DESC LIMIT 30", [$pid]);
     }
 
     return $values;
@@ -244,6 +244,9 @@ while ($row = sqlFetchArray($values)) {
     }
 }
 
+// Reverse the data array to show oldest to newest for display
+$data = array_reverse($data, true);
+
 if ($isBP) {
   //set up the other blood pressure line
     while ($row = sqlFetchArray($values_alt)) {
@@ -263,6 +266,9 @@ if ($isBP) {
             $data[$x][$name_alt] = $y;
         }
     }
+    
+    // Reverse the blood pressure data as well
+    $data = array_reverse($data, true);
 }
 
 // Prepare label
