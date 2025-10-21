@@ -351,6 +351,10 @@ $vitals_is_registered = $tmp['count'];
 $tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'general_readings' AND state = 1");
 $general_readings_is_registered = $tmp['count'];
 
+// Determine if the Custom Vitals form is in use for this site.
+$tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'custom_vitals' AND state = 1");
+$custom_vitals_is_registered = $tmp['count'];
+
 // Get patient/employer/insurance information.
 //
 $result = getPatientData($pid, "*, DATE_FORMAT(DOB,'%Y-%m-%d') as DOB_YMD");
@@ -630,6 +634,11 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             // Initialize the General Readings form if user is authorized.
             <?php if (AclMain::aclCheckCore('patients', 'med')) { ?>
             placeHtml("general_readings_fragment.php", "general_readings_ps_expand");
+            <?php } ?>
+
+            // Initialize the Custom Vitals form if user is authorized.
+            <?php if (AclMain::aclCheckCore('patients', 'med')) { ?>
+            placeHtml("custom_vitals_fragment.php", "custom_vitals_ps_expand");
             <?php } ?>
 
             <?php if ($GLOBALS['enable_cdr'] && $GLOBALS['enable_cdr_crw']) { ?>
@@ -1503,6 +1512,33 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                             echo $twig->getTwig()->render('patient/card/loader.html.twig', $viewArgs);
                         }
                     endif; // end general readings
+
+                    // Custom Vitals Card
+                    if ($custom_vitals_is_registered && AclMain::aclCheckCore('patients', 'med')) :
+                        $dispatchResult = $ed->dispatch(new CardRenderEvent('custom_vitals'), CardRenderEvent::EVENT_HANDLE);
+                        // custom vitals expand collapse widget
+                        // check to see if any custom vitals exist
+                        $existCustomVitals = sqlQuery("SELECT COUNT(*) as count FROM form_custom_vitals WHERE pid=?", [$pid]);
+                        $hasData = ($existCustomVitals['count'] > 0);
+                        
+                        $id = "custom_vitals_ps_expand";
+                        
+                        $viewArgs = [
+                            'title' => xl('Custom Vitals'),
+                            'id' => $id,
+                            'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
+                            'btnLabel' => '', // Let the fragment handle the buttons
+                            'btnLink' => '',
+                            'linkMethod' => 'html',
+                            'bodyClass' => 'collapse show',
+                            'auth' => true,
+                            'prependedInjection' => $dispatchResult->getPrependedInjection(),
+                            'appendedInjection' => $dispatchResult->getAppendedInjection(),
+                        ];
+                        if (!in_array('card_custom_vitals', $hiddenCards)) {
+                            echo $twig->getTwig()->render('patient/card/loader.html.twig', $viewArgs);
+                        }
+                    endif; // end custom vitals
 
                     // if anyone wants to render anything after the patient demographic list
                     $GLOBALS["kernel"]->getEventDispatcher()->dispatch(new RenderEvent($pid), RenderEvent::EVENT_SECTION_LIST_RENDER_AFTER, 10);

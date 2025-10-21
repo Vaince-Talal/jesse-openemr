@@ -1,0 +1,217 @@
+{#*
+* custom_vitals custom_vitals.html.twig
+*
+* @package   OpenEMR
+* @link      http://www.open-emr.org
+* @author    Custom Component
+* @copyright Copyright (c) 2024 Custom Component
+* @license   https://github.com/openemr/openemr/blob/master/LICENSE GNU General Public License 3
+*#}
+<html>
+<head>
+    <title>{{ "Custom Vitals"|xlt }}</title>
+    {{ setupHeader(["datetime-picker"]) }}
+    <style>
+        .graph {
+            color: #0000cc;
+            cursor: pointer;
+        }
+        .graph:hover {
+            color: #ff5555;
+        }
+    </style>
+</head>
+<body class="body_top">
+
+{% if is_trend_view %}
+    {# Trend view - show historical data table like vitals #}
+    {% if _GET.error %}
+        <div class="alert alert-danger" style="margin: 20px; padding: 15px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 4px;">
+            {{ _GET.error|attr }}
+        </div>
+    {% endif %}
+    {% if _GET.success %}
+        <div class="alert alert-success" style="margin: 20px; padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;">
+            {{ _GET.success|attr }}
+        </div>
+    {% endif %}
+    
+    <div class="container mt-3">
+        <div class="row no-gutters">
+            <div class="col-4">
+                <h2 class="h2-responsive">
+                    {{ "Custom Vitals"|xlt }}&nbsp;&nbsp;&nbsp;
+                    <a id="custom-vitals-screen-top" href="../summary/demographics.php" class="text-decoration-none" onclick="window.top.restoreSession()"
+                        title="{{ 'Back to patient dashboard'|xla }}">
+                            <i id="advanced-tooltip" class="readonly fas fa-arrow-circle-left fa-2x small" aria-hidden="true"></i>
+                    </a>
+                </h2>
+            </div>
+        </div>
+        
+        <div id="chart" class="chart-dygraphs" style="margin-left: -15px"></div>
+        
+        {# Delete forms for each entry - outside main form to avoid conflicts #}
+        {% for reading in custom_vitals_data %}
+            <form id="deleteForm{{ reading.id }}" method="post" action="{{ FORM_ACTION|attr }}/interface/forms/custom_vitals/delete.php" style="display: none;" onsubmit="return confirm('{{ 'Are you sure you want to delete this entry?'|xlt }}')">
+                <input type="hidden" name="csrf_token_form" value="{{ CSRF_TOKEN_FORM|attr }}">
+                <input type="hidden" name="id" value="{{ reading.id|attr }}">
+            </form>
+        {% endfor %}
+        
+        {# Form to add new custom vitals #}
+        <form id="customVitalsForm" name="custom_vitals" method="post" action="{{ FORM_ACTION|attr }}/interface/forms/custom_vitals/save.php">
+            <input type="hidden" name="csrf_token_form" value="{{ CSRF_TOKEN_FORM|attr }}" />
+            <input type="hidden" name="id" id='id' value="0" />
+            <input type="hidden" name="pid" id='pid' value="{{ GLOBALS['pid'] }}" />
+            <input type="hidden" name="process" id='process' value="true" />
+            
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-head">
+                        <tr>
+                            <th class="text-left"><span class="custom-vitals-title">{{ "Name"|xlt }}</span></th>
+                            <th class="text-left">{{ "Unit"|xlt }}</th>
+                            <th class="currentvalues">{{ "Value"|xlt }}</th>
+                            {% for reading in custom_vitals_data %}
+                                <th class='historicalvalues d-none d-md-table-cell'>
+                                    {{ reading.date|date("Y-m-d H:i")|text }}
+                                    <br>
+                                    <button type="button" class="btn btn-danger btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="document.getElementById('deleteForm{{ reading.id }}').submit();">{{ "Delete"|xlt }}</button>
+                                </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# Use the same pattern as vitals - iterate through fields array #}
+                        {% for field in customVitalsFields %}
+                            {% if field.type == "textbox" %}
+                                {% include "custom_vitals_textbox.html.twig" with {
+                                    field: field, 
+                                    custom_vitals_data: custom_vitals_data, 
+                                    is_edit: is_edit 
+                                } %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {# PDF Export row like vitals #}
+                        <tr>
+                            <td>Custom Vitals Report (PDF) Custom Vitals Report (HTML)</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="window.open('{{ FORM_ACTION|attr }}/interface/forms/custom_vitals/report.php?pid={{ GLOBALS['pid'] }}&format=pdf', '_blank')">Custom Vitals Report (PDF)</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.open('{{ FORM_ACTION|attr }}/interface/forms/custom_vitals/report.php?pid={{ GLOBALS['pid'] }}&format=html', '_blank')">Custom Vitals Report (HTML)</button>
+                            </td>
+                            <td></td>
+                            {% for reading in custom_vitals_data %}
+                                <td class="historicalvalues d-none d-md-table-cell"></td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="form-group">
+                <div class="text-left position-override">
+                    <div class="btn-group" role="group">
+                        <button type="submit" class="btn btn-primary btn-save editonly" name="Submit" value=''>{{ "Save"|xlt }}</button>
+                        <button type="button" class="btn btn-secondary btn-cancel editonly" id="cancel" value=''>{{ "Cancel"|xlt }}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+<script>
+// Clear form inputs after successful submission in trend view
+{% if _GET.success %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear all form inputs in the trend view
+    const inputs = document.querySelectorAll('#customVitalsForm input[type="number"], #customVitalsForm textarea');
+    inputs.forEach(function(input) {
+        if (input.type === 'number') {
+            input.value = '';
+        } else if (input.tagName === 'TEXTAREA') {
+            input.value = '';
+        }
+    });
+});
+{% endif %}
+</script>
+{% else %}
+    {# Regular form view #}
+    {% if _GET.error %}
+        <div class="alert alert-danger" style="margin: 20px; padding: 15px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 4px;">
+            {{ _GET.error|attr }}
+        </div>
+    {% endif %}
+    {% if _GET.success %}
+        <div class="alert alert-success" style="margin: 20px; padding: 15px; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; border-radius: 4px;">
+            {{ _GET.success|attr }}
+        </div>
+    {% endif %}
+    
+    <form method="post" action="{{ FORM_ACTION|attr }}/interface/forms/custom_vitals/save.php" onsubmit="return top.restoreSession()">
+        <input type="hidden" name="csrf_token_form" value="{{ CSRF_TOKEN_FORM|attr }}">
+        <input type="hidden" name="id" value="{{ custom_vitals.id|attr }}">
+        
+        <div class="container">
+            <h2>{{ "Custom Vitals"|xlt }}</h2>
+            
+            <table class="table">
+                <tr>
+                    <td>{{ "Systolic BP (50-300 mmHg)"|xlt }}:</td>
+                    <td><input type="number" name="bps" value="{{ custom_vitals.bps|attr }}" min="50" max="300" step="1" placeholder="120"></td>
+                </tr>
+                <tr>
+                    <td>{{ "Diastolic BP (30-200 mmHg)"|xlt }}:</td>
+                    <td><input type="number" name="bpd" value="{{ custom_vitals.bpd|attr }}" min="30" max="200" step="1" placeholder="80"></td>
+                </tr>
+                <tr>
+                    <td>{{ "Pulse (30-300 bpm)"|xlt }}:</td>
+                    <td><input type="number" name="pulse" value="{{ custom_vitals.pulse|attr }}" min="30" max="300" step="1" placeholder="72"></td>
+                </tr>
+                <tr>
+                    <td>{{ "Respiration (5-60 per min)"|xlt }}:</td>
+                    <td><input type="number" name="respiration" value="{{ custom_vitals.respiration|attr }}" min="5" max="60" step="1" placeholder="16"></td>
+                </tr>
+                <tr>
+                    <td>{{ "Oxygen Saturation (50-100%)"|xlt }}:</td>
+                    <td><input type="number" name="oxygen_saturation" value="{{ custom_vitals.oxygen_saturation|attr }}" min="50" max="100" step="0.1" placeholder="98.0"></td>
+                </tr>
+                <tr>
+                    <td class="graph" id="mean_arterial_pressure"><span class="custom-vitals-title">{{ "Mean Arterial Pressure (MAP) (20-150 mmHg)"|xlt }}</span></td>
+                    <td><input type="number" name="mean_arterial_pressure" value="{{ custom_vitals.mean_arterial_pressure|attr }}" min="20" max="150" step="0.1" placeholder="93.3"></td>
+                </tr>
+                <tr>
+                    <td>{{ "Notes"|xlt }}:</td>
+                    <td><textarea name="note" rows="3" cols="50" placeholder="Additional observations...">{{ custom_vitals.note|attr }}</textarea></td>
+                </tr>
+            </table>
+            
+            <div class="form-actions">
+                <input type="submit" value="{{ "Save"|xlt }}" class="btn btn-primary">
+                <a href="{{ DONT_SAVE_LINK|attr }}" class="btn btn-secondary">{{ "Cancel"|xlt }}</a>
+            </div>
+        </div>
+    </form>
+{% endif %}
+
+<script>
+// Clear form inputs after successful submission
+{% if _GET.success %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear all form inputs
+    const inputs = document.querySelectorAll('input[type="number"], textarea');
+    inputs.forEach(function(input) {
+        if (input.type === 'number') {
+            input.value = '';
+        } else if (input.tagName === 'TEXTAREA') {
+            input.value = '';
+        }
+    });
+});
+{% endif %}
+</script>
+
+</body>
+</html>

@@ -140,6 +140,8 @@ $(function () {
   $(".graph").on("click", function(e){ show_graph(<?php echo js_escape($formname); ?>, this.id.substring(9), $(this).text()) });
 <?php } elseif ($formname == 'general_readings') { ?>
   $(".graph").on("click", function(e){ show_graph('form_general_readings', this.id, $(this).text()) });
+<?php } elseif ($formname == 'custom_vitals') { ?>
+  $(".graph").on("click", function(e){ show_graph('form_custom_vitals', this.id, $(this).text()) });
 <?php } else { ?>
   $(".graph").on("click", function(e){ show_graph('form_vitals', this.id, $(this).text()) });
 <?php } ?>
@@ -161,6 +163,8 @@ $(function () {
 <?php } ?>
 <?php } elseif ($formname == 'general_readings') { ?>
   show_graph('form_general_readings','walking','');
+<?php } elseif ($formname == 'custom_vitals') { ?>
+  show_graph('form_custom_vitals','mean_arterial_pressure','');
 <?php } else { ?>
   show_graph('form_vitals','bps','');
 <?php } ?>

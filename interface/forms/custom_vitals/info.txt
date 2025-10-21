@@ -1,0 +1,22 @@
+Custom Vitals Form
+Clinical
+Custom Vitals
+This form captures essential vital signs measurements excluding:
+- Weight in kg
+- Height & length (measured annually)
+- Temperature in F
+- O2 flow rate
+- Inhaled O2 concentration
+- Head & waist circumference
+- BMI
+
+Included fields:
+- Systolic BP (mmHg)
+- Diastolic BP (mmHg)
+- Pulse (bpm)
+- Respiration (per min)
+- Oxygen Saturation (%)
+- Mean Arterial Pressure (MAP) (20-150 mmHg)
+- Notes
+
+This form is designed for regular vital signs monitoring without the excluded measurements.
