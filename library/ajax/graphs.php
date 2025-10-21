@@ -174,6 +174,32 @@ if ($is_lbf) {
         case "BMI":
              $titleGraph = $title . " (" . xl("kg/m^2") . ")";
             break;
+        // General Readings fields
+        case "daily_fluid_intake":
+             $titleGraph = $title . " (" . xl("ml") . ")";
+            break;
+        case "daily_protein_intake":
+             $titleGraph = $title . " (" . xl("grams") . ")";
+            break;
+        case "shower":
+        case "sponge_bath":
+             $titleGraph = $title . " (" . xl("0-5") . ")";
+            break;
+        case "walking":
+        case "energy":
+        case "sleep_pattern":
+        case "stress_level":
+        case "pain":
+        case "abdominal_pain":
+        case "appetite":
+        case "bowel_movements":
+        case "fatigue":
+             $titleGraph = $title . " (" . xl("0-10") . ")";
+            break;
+        case "am_fasting_glucose":
+        case "hs_fasting_glucose":
+             $titleGraph = $title . " (" . xl("mg/dL") . ")";
+            break;
         default:
              $titleGraph = $title;
     }

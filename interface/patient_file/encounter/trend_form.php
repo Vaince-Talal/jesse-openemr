@@ -99,12 +99,11 @@ function show_graph(table_graph, name_graph, title_graph)
                 title: returnData.title,
                 delimiter: '\t',
                 xRangePad: 70,
-                yRangePad: 70,
+                yRangePad: 10,
                 width: 600,
                 height: 600,
                 xlabel: 'Date',
                 includeZero: true,
-                yAxisRangePad: 10,
                 drawPoints: true,
                 pointSize: 4,
                 strokeWidth: 2
