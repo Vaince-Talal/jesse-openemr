@@ -134,7 +134,7 @@ class C_FormCustomVitals
             'custom_vitals_data' => $custom_vitals_data,
             'customVitalsFields' => $customVitalsFields,
             'FORM_ACTION' => $GLOBALS['web_root'],
-            'DONT_SAVE_LINK' => $GLOBALS['form_exit_url'],
+            'DONT_SAVE_LINK' => $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php?set_pid=" . $GLOBALS['pid'],
             'STYLE' => $GLOBALS['style'],
             'CSRF_TOKEN_FORM' => CsrfUtils::collectCsrfToken(),
             'has_id' => $this->form_id,
@@ -154,7 +154,7 @@ class C_FormCustomVitals
         $data = [
             'custom_vitals' => $this->custom_vitals,
             'FORM_ACTION' => $GLOBALS['web_root'],
-            'DONT_SAVE_LINK' => $GLOBALS['form_exit_url'],
+            'DONT_SAVE_LINK' => $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php?set_pid=" . $GLOBALS['pid'],
             'STYLE' => $GLOBALS['style'],
             'CSRF_TOKEN_FORM' => CsrfUtils::collectCsrfToken(),
             'has_id' => $this->form_id
