@@ -36,17 +36,38 @@ if (isset($_GET['format']) && isset($_GET['pid'])) {
     $patient_name = $patient_data['fname'] . " " . $patient_data['lname'];
     
     if ($format === 'pdf') {
-        // Generate PDF report
-        header('Content-Type: application/pdf');
-        echo "<!DOCTYPE html><html><head><title>Custom Vitals Report</title></head><body>";
+        // Generate simple PDF using HTML output with print styles
+        header('Content-Type: text/html; charset=utf-8');
+        echo "<!DOCTYPE html><html><head><title>Custom Vitals Report</title>";
+        echo "<style>
+            body { font-family: Arial, sans-serif; margin: 10px; font-size: 10px; }
+            table { border-collapse: collapse; width: 100%; margin-top: 20px; table-layout: fixed; }
+            th, td { border: 1px solid #ddd; padding: 4px; text-align: left; font-size: 9px; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            h1 { color: #333; font-size: 16px; margin-bottom: 10px; }
+            .date-col { width: 80px; }
+            .number-col { width: 60px; }
+            .note-col { width: 120px; }
+            @media print { 
+                body { margin: 0; }
+                @page { size: A4 landscape; margin: 0.5in; }
+            }
+        </style></head><body>";
         echo "<h1>Custom Vitals Report for " . htmlspecialchars($patient_name) . "</h1>";
         echo "<p>Generated on: " . date('Y-m-d H:i:s') . "</p>";
         
         if (!empty($custom_vitals_data)) {
-            echo "<table border='1' cellpadding='5' style='width: 100%; border-collapse: collapse;'>";
-            echo "<tr style='background-color: #f0f0f0;'>";
-            echo "<th>Date</th><th>Systolic BP</th><th>Diastolic BP</th><th>Pulse</th><th>Respiration</th><th>O2 Sat</th><th>MAP</th><th>Notes</th>";
-            echo "</tr>";
+            echo "<table>";
+            echo "<tr>
+                <th class='date-col'>Date</th>
+                <th class='number-col'>Systolic BP</th>
+                <th class='number-col'>Diastolic BP</th>
+                <th class='number-col'>Pulse</th>
+                <th class='number-col'>Respiration</th>
+                <th class='number-col'>O2 Sat</th>
+                <th class='number-col'>MAP</th>
+                <th class='note-col'>Notes</th>
+            </tr>";
             
             foreach ($custom_vitals_data as $reading) {
                 echo "<tr>";
