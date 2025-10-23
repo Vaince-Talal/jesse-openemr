@@ -66,6 +66,7 @@ if (isset($_GET['format']) && isset($_GET['pid'])) {
                 <th class='number-col'>Respiration</th>
                 <th class='number-col'>O2 Sat</th>
                 <th class='number-col'>MAP</th>
+                <th class='number-col'>Temperature</th>
                 <th class='note-col'>Notes</th>
             </tr>";
             
@@ -78,6 +79,7 @@ if (isset($_GET['format']) && isset($_GET['pid'])) {
                 echo "<td class='number-col'>" . htmlspecialchars($reading['respiration']) . "</td>";
                 echo "<td class='number-col'>" . htmlspecialchars($reading['oxygen_saturation']) . "</td>";
                 echo "<td class='number-col'>" . htmlspecialchars($reading['mean_arterial_pressure']) . "</td>";
+                echo "<td class='number-col'>" . htmlspecialchars($reading['temperature_celsius']) . "</td>";
                 echo "<td class='note-col'>" . htmlspecialchars($reading['note'] ?? '') . "</td>";
                 echo "</tr>";
             }
@@ -106,6 +108,7 @@ if (isset($_GET['format']) && isset($_GET['pid'])) {
                 echo "<tr><td>Respiration:</td><td>" . htmlspecialchars($reading['respiration']) . " per min</td></tr>";
                 echo "<tr><td>Oxygen Saturation:</td><td>" . htmlspecialchars($reading['oxygen_saturation']) . " %</td></tr>";
                 echo "<tr><td>Mean Arterial Pressure (MAP):</td><td>" . htmlspecialchars($reading['mean_arterial_pressure']) . " mmHg</td></tr>";
+                echo "<tr><td>Temperature:</td><td>" . htmlspecialchars($reading['temperature_celsius']) . " °C</td></tr>";
                 if (!empty($reading['note'])) {
                     echo "<tr><td>Notes:</td><td>" . htmlspecialchars($reading['note']) . "</td></tr>";
                 }
@@ -136,6 +139,7 @@ function custom_vitals_report($pid, $encounter, $cols, $id, $print = true)
             'respiration' => ['label' => 'Respiration', 'unit' => 'per min'],
             'oxygen_saturation' => ['label' => 'Oxygen Saturation', 'unit' => '%'],
             'mean_arterial_pressure' => ['label' => 'Mean Arterial Pressure (MAP)', 'unit' => 'mmHg'],
+            'temperature_celsius' => ['label' => 'Temperature', 'unit' => '°C'],
             'note' => ['label' => 'Notes', 'unit' => '']
         ];
         

@@ -31,6 +31,7 @@ class FormCustomVitals extends ORDataObject
     public $respiration;
     public $oxygen_saturation;
     public $mean_arterial_pressure;
+    public $temperature_celsius;
     public $note;
     public $uuid;
 

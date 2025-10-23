@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `form_custom_vitals` (
 `respiration`       FLOAT(5,2)      default 0,
 `oxygen_saturation` FLOAT(5,2)      default 0,
 `mean_arterial_pressure` FLOAT(5,2) default 0,
+`temperature_celsius` FLOAT(5,2) default 0,
 `note`              VARCHAR(255)   default NULL,
 PRIMARY KEY (id),
 UNIQUE KEY `uuid` (uuid)

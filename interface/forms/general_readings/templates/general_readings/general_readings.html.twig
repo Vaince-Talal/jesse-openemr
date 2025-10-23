@@ -77,6 +77,7 @@
                                 <th class='historicalvalues d-none d-md-table-cell'>
                                     {{ reading.date|date("Y-m-d H:i")|text }}
                                     <br>
+                                    <button type="button" class="btn btn-primary btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="window.location.href='{{ FORM_ACTION|attr }}/interface/forms/general_readings/edit.php?id={{ reading.id }}'">{{ "Edit"|xlt }}</button>
                                     <button type="button" class="btn btn-danger btn-sm" style="font-size: 10px; padding: 2px 6px;" onclick="document.getElementById('deleteForm{{ reading.id }}').submit();">{{ "Delete"|xlt }}</button>
                                 </th>
                             {% endfor %}

@@ -290,6 +290,48 @@ class C_FormGeneralReadings
         }
     }
 
+    public function edit_action()
+    {
+        $id = $_GET['id'] ?? 0;
+        
+        if ($id <= 0) {
+            // Redirect back to trend view with error message
+            $error_msg = xl("Invalid entry ID for editing.");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=general_readings&error=" . urlencode($error_msg);
+            header("Location: " . $redirect_url);
+            exit;
+        }
+        
+        // Get the existing general readings entry
+        $sql = "SELECT * FROM form_general_readings WHERE id = ? AND pid = ?";
+        $result = sqlQuery($sql, [$id, $GLOBALS['pid']]);
+        
+        if (!$result) {
+            // Redirect back to trend view with error message
+            $error_msg = xl("General Readings entry not found.");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=general_readings&error=" . urlencode($error_msg);
+            header("Location: " . $redirect_url);
+            exit;
+        }
+        
+        $this->general_readings = new FormGeneralReadings($id);
+        
+        $data = [
+            'general_readings' => $this->general_readings,
+            'FORM_ACTION' => $GLOBALS['web_root'],
+            'DONT_SAVE_LINK' => $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=general_readings",
+            'STYLE' => $GLOBALS['style'],
+            'CSRF_TOKEN_FORM' => CsrfUtils::collectCsrfToken(),
+            'has_id' => $id,
+            'is_edit_mode' => true,
+            'is_trend_view' => false,
+            '_GET' => $_GET
+        ];
+        
+        $twig = (new TwigContainer($this->template_dir, $GLOBALS['kernel']))->getTwig();
+        return $twig->render("general_readings/general_readings.html.twig", $data);
+    }
+
     public function save_action()
     {
         // Verify CSRF token
@@ -316,33 +358,56 @@ class C_FormGeneralReadings
         $fatigue = $_POST['fatigue'] ?? 0;
         $note = $_POST['note'] ?? '';
 
-        // Insert into database
-        $sql = "INSERT INTO form_general_readings (
-            pid, user, groupname, authorized, activity, date,
-            daily_fluid_intake, daily_protein_intake, shower, sponge_bath, walking,
-            am_fasting_glucose, hs_fasting_glucose, energy, sleep_pattern, stress_level,
-            pain, abdominal_pain, appetite, bowel_movements, fatigue, note
-        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-        $result = sqlStatement($sql, [
-            $GLOBALS['pid'], $_SESSION['authUser'], $_SESSION['authProvider'], 1, 1,
-            $daily_fluid_intake, $daily_protein_intake, $shower, $sponge_bath, $walking,
-            $am_fasting_glucose, $hs_fasting_glucose, $energy, $sleep_pattern, $stress_level,
-            $pain, $abdominal_pain, $appetite, $bowel_movements, $fatigue, $note
-        ]);
-
-        if ($result) {
-            // Redirect to dashboard with success message
-            $success_msg = xl("General Readings saved successfully!");
-            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/summary/demographics.php";
-            header("Location: " . $redirect_url . "?success=" . urlencode($success_msg));
-            exit;
+        if ($id > 0) {
+            // Update existing entry
+            $sql = "UPDATE form_general_readings SET 
+                daily_fluid_intake = ?, daily_protein_intake = ?, shower = ?, sponge_bath = ?, walking = ?,
+                am_fasting_glucose = ?, hs_fasting_glucose = ?, energy = ?, sleep_pattern = ?, stress_level = ?,
+                pain = ?, abdominal_pain = ?, appetite = ?, bowel_movements = ?, fatigue = ?, note = ?
+                WHERE id = ? AND pid = ?";
+            
+            $result = sqlStatement($sql, [
+                $daily_fluid_intake, $daily_protein_intake, $shower, $sponge_bath, $walking,
+                $am_fasting_glucose, $hs_fasting_glucose, $energy, $sleep_pattern, $stress_level,
+                $pain, $abdominal_pain, $appetite, $bowel_movements, $fatigue, $note, $id, $GLOBALS['pid']
+            ]);
+            
+            if ($result) {
+                $success_msg = xl("General Readings updated successfully!");
+            } else {
+                $error_msg = xl("Error updating General Readings!");
+            }
         } else {
-            // Redirect back with error message
-            $error_msg = xl("Error saving General Readings!");
-            $redirect_url = $GLOBALS['webroot'] . "/interface/forms/general_readings/new.php";
-            header("Location: " . $redirect_url . "?error=" . urlencode($error_msg));
-            exit;
+            // Insert new entry
+            $sql = "INSERT INTO form_general_readings (
+                pid, user, groupname, authorized, activity, date,
+                daily_fluid_intake, daily_protein_intake, shower, sponge_bath, walking,
+                am_fasting_glucose, hs_fasting_glucose, energy, sleep_pattern, stress_level,
+                pain, abdominal_pain, appetite, bowel_movements, fatigue, note
+            ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $result = sqlStatement($sql, [
+                $GLOBALS['pid'], $_SESSION['authUser'], $_SESSION['authProvider'], 1, 1,
+                $daily_fluid_intake, $daily_protein_intake, $shower, $sponge_bath, $walking,
+                $am_fasting_glucose, $hs_fasting_glucose, $energy, $sleep_pattern, $stress_level,
+                $pain, $abdominal_pain, $appetite, $bowel_movements, $fatigue, $note
+            ]);
+            
+            if ($result) {
+                $success_msg = xl("General Readings saved successfully!");
+            } else {
+                $error_msg = xl("Error saving General Readings!");
+            }
         }
+
+        // Redirect back to trend view
+        $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=general_readings";
+        if (isset($success_msg)) {
+            $redirect_url .= "&success=" . urlencode($success_msg);
+        } else {
+            $redirect_url .= "&error=" . urlencode($error_msg);
+        }
+        header("Location: " . $redirect_url);
+        exit;
     }
 }

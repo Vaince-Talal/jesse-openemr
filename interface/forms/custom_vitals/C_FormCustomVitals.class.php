@@ -127,6 +127,16 @@ class C_FormCustomVitals
                 'unitLabel' => xl('mmHg'),
                 'precision' => 1,
                 'codes' => ''
+            ],
+            [
+                'type' => 'textbox',
+                'title' => xl('Temperature'),
+                'input' => 'temperature_celsius',
+                'customVitalsValue' => 'temperature_celsius',
+                'unit' => '°C',
+                'unitLabel' => xl('°C'),
+                'precision' => 1,
+                'codes' => ''
             ]
         ];
         
@@ -200,6 +210,48 @@ class C_FormCustomVitals
         }
     }
 
+    public function edit_action()
+    {
+        $id = $_GET['id'] ?? 0;
+        
+        if ($id <= 0) {
+            // Redirect back to trend view with error message
+            $error_msg = xl("Invalid entry ID for editing.");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals&error=" . urlencode($error_msg);
+            header("Location: " . $redirect_url);
+            exit;
+        }
+        
+        // Get the existing custom vitals entry
+        $sql = "SELECT * FROM form_custom_vitals WHERE id = ? AND pid = ?";
+        $result = sqlQuery($sql, [$id, $GLOBALS['pid']]);
+        
+        if (!$result) {
+            // Redirect back to trend view with error message
+            $error_msg = xl("Custom Vitals entry not found.");
+            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals&error=" . urlencode($error_msg);
+            header("Location: " . $redirect_url);
+            exit;
+        }
+        
+        $this->custom_vitals = new FormCustomVitals($id);
+        
+        $data = [
+            'custom_vitals' => $this->custom_vitals,
+            'FORM_ACTION' => $GLOBALS['web_root'],
+            'DONT_SAVE_LINK' => $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals",
+            'STYLE' => $GLOBALS['style'],
+            'CSRF_TOKEN_FORM' => CsrfUtils::collectCsrfToken(),
+            'has_id' => $id,
+            'is_edit_mode' => true,
+            'is_trend_view' => false,
+            '_GET' => $_GET
+        ];
+        
+        $twig = (new TwigContainer($this->template_dir, $GLOBALS['kernel']))->getTwig();
+        return $twig->render("custom_vitals/custom_vitals.html.twig", $data);
+    }
+
     public function save_action()
     {
         // Verify CSRF token
@@ -215,31 +267,53 @@ class C_FormCustomVitals
         $respiration = $_POST['respiration'] ?? 0;
         $oxygen_saturation = $_POST['oxygen_saturation'] ?? 0;
         $mean_arterial_pressure = $_POST['mean_arterial_pressure'] ?? 0;
+        $temperature_celsius = $_POST['temperature_celsius'] ?? 0;
         $note = $_POST['note'] ?? '';
 
-        // Insert into database
-        $sql = "INSERT INTO form_custom_vitals (
-            pid, user, groupname, authorized, activity, date,
-            bps, bpd, pulse, respiration, oxygen_saturation, mean_arterial_pressure, note
-        ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?)";
-
-        $result = sqlStatement($sql, [
-            $GLOBALS['pid'], $_SESSION['authUser'], $_SESSION['authProvider'], 1, 1,
-            $bps, $bpd, $pulse, $respiration, $oxygen_saturation, $mean_arterial_pressure, $note
-        ]);
-
-        if ($result) {
-            // Redirect back to trend view with success message
-            $success_msg = xl("Custom Vitals saved successfully!");
-            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals&success=" . urlencode($success_msg);
-            header("Location: " . $redirect_url);
-            exit;
+        if ($id > 0) {
+            // Update existing entry
+            $sql = "UPDATE form_custom_vitals SET 
+                bps = ?, bpd = ?, pulse = ?, respiration = ?, oxygen_saturation = ?, 
+                mean_arterial_pressure = ?, temperature_celsius = ?, note = ?
+                WHERE id = ? AND pid = ?";
+            
+            $result = sqlStatement($sql, [
+                $bps, $bpd, $pulse, $respiration, $oxygen_saturation, 
+                $mean_arterial_pressure, $temperature_celsius, $note, $id, $GLOBALS['pid']
+            ]);
+            
+            if ($result) {
+                $success_msg = xl("Custom Vitals updated successfully!");
+            } else {
+                $error_msg = xl("Error updating Custom Vitals!");
+            }
         } else {
-            // Redirect back with error message
-            $error_msg = xl("Error saving Custom Vitals!");
-            $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals&error=" . urlencode($error_msg);
-            header("Location: " . $redirect_url);
-            exit;
+            // Insert new entry
+            $sql = "INSERT INTO form_custom_vitals (
+                pid, user, groupname, authorized, activity, date,
+                bps, bpd, pulse, respiration, oxygen_saturation, mean_arterial_pressure, temperature_celsius, note
+            ) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $result = sqlStatement($sql, [
+                $GLOBALS['pid'], $_SESSION['authUser'], $_SESSION['authProvider'], 1, 1,
+                $bps, $bpd, $pulse, $respiration, $oxygen_saturation, $mean_arterial_pressure, $temperature_celsius, $note
+            ]);
+            
+            if ($result) {
+                $success_msg = xl("Custom Vitals saved successfully!");
+            } else {
+                $error_msg = xl("Error saving Custom Vitals!");
+            }
         }
+
+        // Redirect back to trend view
+        $redirect_url = $GLOBALS['webroot'] . "/interface/patient_file/encounter/trend_form.php?formname=custom_vitals";
+        if (isset($success_msg)) {
+            $redirect_url .= "&success=" . urlencode($success_msg);
+        } else {
+            $redirect_url .= "&error=" . urlencode($error_msg);
+        }
+        header("Location: " . $redirect_url);
+        exit;
     }
 }
