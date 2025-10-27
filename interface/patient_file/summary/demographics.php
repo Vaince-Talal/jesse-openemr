@@ -355,6 +355,10 @@ $general_readings_is_registered = $tmp['count'];
 $tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'custom_vitals' AND state = 1");
 $custom_vitals_is_registered = $tmp['count'];
 
+// Determine if the Narrative Notes form is in use for this site.
+$tmp = sqlQuery("SELECT count(*) AS count FROM registry WHERE directory = 'narrative_notes' AND state = 1");
+$narrative_notes_is_registered = $tmp['count'];
+
 // Get patient/employer/insurance information.
 //
 $result = getPatientData($pid, "*, DATE_FORMAT(DOB,'%Y-%m-%d') as DOB_YMD");
@@ -639,6 +643,7 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             // Initialize the Custom Vitals form if user is authorized.
             <?php if (AclMain::aclCheckCore('patients', 'med')) { ?>
             placeHtml("custom_vitals_fragment.php", "custom_vitals_ps_expand");
+            placeHtml("narrative_notes_fragment.php", "narrative_notes_ps_expand");
             <?php } ?>
 
             <?php if ($GLOBALS['enable_cdr'] && $GLOBALS['enable_cdr_crw']) { ?>
@@ -1540,6 +1545,33 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                         }
                     endif; // end custom vitals
 
+                    // Narrative Notes Card
+                    if ($narrative_notes_is_registered && AclMain::aclCheckCore('patients', 'med')) :
+                        $dispatchResult = $ed->dispatch(new CardRenderEvent('narrative_notes'), CardRenderEvent::EVENT_HANDLE);
+                        // narrative notes expand collapse widget
+                        // check to see if any narrative notes exist
+                        $existNarrativeNotes = sqlQuery("SELECT COUNT(*) as count FROM form_narrative_notes WHERE pid=?", [$pid]);
+                        $hasData = ($existNarrativeNotes['count'] > 0);
+                        
+                        $id = "narrative_notes_ps_expand";
+                        
+                        $viewArgs = [
+                            'title' => xl('Narrative Notes'),
+                            'id' => $id,
+                            'initiallyCollapsed' => (getUserSetting($id) == 0) ? true : false,
+                            'btnLabel' => '', // Let the fragment handle the buttons
+                            'btnLink' => '',
+                            'linkMethod' => 'html',
+                            'bodyClass' => 'collapse show',
+                            'auth' => true,
+                            'prependedInjection' => $dispatchResult->getPrependedInjection(),
+                            'appendedInjection' => $dispatchResult->getAppendedInjection(),
+                        ];
+                        if (!in_array('card_narrative_notes', $hiddenCards)) {
+                            echo $twig->getTwig()->render('patient/card/loader.html.twig', $viewArgs);
+                        }
+                    endif; // end narrative notes
+
                     // if anyone wants to render anything after the patient demographic list
                     $GLOBALS["kernel"]->getEventDispatcher()->dispatch(new RenderEvent($pid), RenderEvent::EVENT_SECTION_LIST_RENDER_AFTER, 10);
 
@@ -2079,6 +2111,153 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                 $("#eligibility").click();
                 $("#eligibility").get(0).scrollIntoView();
             }
+        });
+
+        // Narrative Notes Functions
+        function saveNotes(isAutoSave = false) {
+            var noteContent = $('#narrative_note_content').val();
+            var noteId = $('#narrative_note_content').data('note-id');
+            var patientId = $('#narrative_note_content').data('patient-id');
+            
+            // Show saving indicator
+            $('#saving_indicator').show();
+            
+            // Get fresh CSRF token
+            var csrfToken = $('#narrative_notes_csrf').val();
+            
+            $.ajax({
+                url: '<?php echo $GLOBALS['web_root']; ?>/interface/forms/narrative_notes/save_note.php',
+                type: 'POST',
+                data: { 
+                    note_content: noteContent,
+                    note_id: noteId,
+                    patient_id: patientId,
+                    csrf_token_form: csrfToken
+                },
+                success: function(response) {
+                    // Hide saving indicator
+                    $('#saving_indicator').hide();
+                    
+                    if (response.success) {
+                        if (response.note_id) {
+                            $('#narrative_note_content').data('note-id', response.note_id);
+                        }
+                        updateLastSavedTime();
+                        
+                        if (!isAutoSave) {
+                            // Show success message only for manual saves
+                            showMessage('<?php echo xlt('Notes saved successfully!'); ?>', 'success');
+                        }
+                    } else {
+                        showMessage('<?php echo xlt('Error saving notes: '); ?>' + (response.error || '<?php echo xlt('Unknown error'); ?>'), 'error');
+                    }
+                },
+                error: function() {
+                    // Hide saving indicator
+                    $('#saving_indicator').hide();
+                    showMessage('<?php echo xlt('Error saving notes. Please try again.'); ?>', 'error');
+                }
+            });
+        }
+        
+        function updateLastSavedTime() {
+            var now = new Date();
+            var timeString = now.toLocaleTimeString();
+            $('#last_saved_time').text(timeString);
+        }
+        
+        function showMessage(message, type) {
+            var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            var messageHtml = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
+                             message +
+                             '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                             '<span aria-hidden="true">&times;</span>' +
+                             '</button></div>';
+            
+            // Remove any existing alerts
+            $('.alert').remove();
+            
+            // Add new alert
+            $('#narrative_notes').prepend(messageHtml);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 3000);
+        }
+        
+        function loadNotesForDate(date) {
+            var csrfToken = $('#narrative_notes_csrf').val();
+            $.ajax({
+                url: '<?php echo $GLOBALS['web_root']; ?>/interface/forms/narrative_notes/get_notes.php',
+                type: 'GET',
+                data: { 
+                    pid: <?php echo $pid; ?>, 
+                    date: date,
+                    csrf_token_form: csrfToken
+                },
+                success: function(response) {
+                    var content = $('#historical_notes_content');
+                    if (response.success && response.data) {
+                        content.html('<div class="alert alert-info"><strong>' + 
+                            '<?php echo xlt('Notes for'); ?> ' + date + ':</strong><br><br>' + 
+                            (response.data.note_content || '<?php echo xlt('No notes found for this date.'); ?>') + 
+                            '</div>');
+                    } else {
+                        content.html('<div class="alert alert-warning"><?php echo xlt('No notes found for this date.'); ?></div>');
+                    }
+                },
+                error: function() {
+                    $('#historical_notes_content').html('<div class="alert alert-danger"><?php echo xlt('Error loading notes.'); ?></div>');
+                }
+            });
+        }
+        
+        function viewHistoricalNotes() {
+            $('#historicalNotesPanel').show();
+        }
+        
+        function closeHistoricalNotes() {
+            $('#historicalNotesPanel').hide();
+        }
+        
+        // Auto-save functionality for narrative notes
+        $(document).ready(function() {
+            // Set up auto-save for narrative notes textarea
+            var saveTimeout;
+            $(document).on('input', '#narrative_note_content', function() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(function() {
+                    saveNotes(true); // true = auto-save
+                }, 300); // Debounce to 300ms to prevent too many database calls
+            });
+            
+            // Initialize datepicker for historical notes
+            $(document).on('focus', '.datepicker', function() {
+                $(this).datetimepicker({
+                    timepicker: false,
+                    format: 'Y-m-d',
+                    scrollInput: false,
+                    scrollMonth: false,
+                    yearStart: 1900,
+                    yearEnd: 2100
+                });
+            });
+            
+            // Handle date picker change
+            $(document).on('change', '#date_picker', function() {
+                var selectedDate = $(this).val();
+                if (selectedDate) {
+                    loadNotesForDate(selectedDate);
+                }
+            });
+            
+            // Close historical notes panel when clicking outside
+            $(document).on('click', '#historicalNotesPanel', function(e) {
+                if (e.target === this) {
+                    closeHistoricalNotes();
+                }
+            });
         });
     </script>
 </body>
