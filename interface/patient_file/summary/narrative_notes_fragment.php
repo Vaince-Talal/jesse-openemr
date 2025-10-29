@@ -103,11 +103,17 @@ if (!$table_exists) {
                 <button type="button" onclick="closeHistoricalNotes()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <div class="form-group">
-                <label for="date_picker"><?php echo xlt('Select Date'); ?>:</label>
-                <input type="text" class="form-control datepicker" id="date_picker" placeholder="<?php echo xla('Select date to view notes'); ?>" />
+                <label><?php echo xlt('View By Date'); ?>:</label>
+                <input type="text" class="form-control datepicker" id="date_picker" placeholder="<?php echo xla('Select date to view notes'); ?>" style="margin-bottom: 10px;" />
+            </div>
+            <div class="form-group">
+                <label><?php echo xlt('Or View All Notes'); ?>:</label>
+                <button type="button" class="btn btn-primary btn-sm" onclick="loadAllNotes()">
+                    <i class="fa fa-list"></i> <?php echo xlt('Show All Notes'); ?>
+                </button>
             </div>
             <div id="historical_notes_content">
-                <p class="text-muted"><?php echo xlt('Select a date to view notes from that day.'); ?></p>
+                <p class="text-muted"><?php echo xlt('Select a date or click "Show All Notes" to view aggregated notes.'); ?></p>
             </div>
             <div style="margin-top: 20px; text-align: right;">
                 <button type="button" class="btn btn-secondary" onclick="closeHistoricalNotes()"><?php echo xlt('Close'); ?></button>

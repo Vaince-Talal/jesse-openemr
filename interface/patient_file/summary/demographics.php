@@ -2221,6 +2221,61 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             $('#historicalNotesPanel').hide();
         }
         
+        function loadAllNotes() {
+            var csrfToken = $('#narrative_notes_csrf').val();
+            var content = $('#historical_notes_content');
+            
+            // Show loading indicator
+            content.html('<div class="text-center"><i class="fa fa-spinner fa-spin"></i> <?php echo xlt('Loading...'); ?></div>');
+            
+            $.ajax({
+                url: '<?php echo $GLOBALS['web_root']; ?>/interface/forms/narrative_notes/get_all_notes.php',
+                type: 'GET',
+                data: { 
+                    pid: <?php echo $pid; ?>, 
+                    csrf_token_form: csrfToken
+                },
+                success: function(response) {
+                    if (response.success && response.data && response.data.length > 0) {
+                        var html = '<div class="list-group">';
+                        html += '<h6 style="margin-bottom: 15px;"><?php echo xlt('All Notes ('); ?>' + response.data.length + ')</h6>';
+                        
+                        response.data.forEach(function(note) {
+                            var noteDate = new Date(note.date);
+                            var dateStr = noteDate.toLocaleDateString('en-US', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            });
+                            var timeStr = noteDate.toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            });
+                            
+                            html += '<div class="card mb-2" style="border-left: 3px solid #007bff;">';
+                            html += '<div class="card-body p-3">';
+                            html += '<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">';
+                            html += '<strong style="color: #007bff;">' + dateStr + '</strong>';
+                            html += '<small class="text-muted">' + timeStr + '</small>';
+                            html += '</div>';
+                            html += '<div style="white-space: pre-wrap; background: #f8f9fa; padding: 10px; border-radius: 4px;">' + 
+                                    (note.note_content || '<?php echo xlt('No notes for this day.'); ?>') + '</div>';
+                            html += '</div>';
+                            html += '</div>';
+                        });
+                        
+                        html += '</div>';
+                        content.html(html);
+                    } else {
+                        content.html('<div class="alert alert-info"><?php echo xlt('No notes found.'); ?></div>');
+                    }
+                },
+                error: function() {
+                    content.html('<div class="alert alert-danger"><?php echo xlt('Error loading notes.'); ?></div>');
+                }
+            });
+        }
+        
         // Auto-save functionality for narrative notes
         $(document).ready(function() {
             // Set up auto-save for narrative notes textarea
