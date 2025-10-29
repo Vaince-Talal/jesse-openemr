@@ -30,11 +30,19 @@ if (!CsrfUtils::verifyCsrfToken($_GET['csrf_token_form'])) {
 }
 
 $patient_id = $_GET['pid'] ?? $pid;
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 50;
+$offset = ($page - 1) * $limit;
 
 try {
-    // Get all notes for this patient, ordered by date DESC
-    $sql = "SELECT * FROM form_narrative_notes WHERE pid = ? ORDER BY date DESC";
-    $results = sqlStatement($sql, [$patient_id]);
+    // Get total count first
+    $count_sql = "SELECT COUNT(*) as total FROM form_narrative_notes WHERE pid = ?";
+    $count_result = sqlQuery($count_sql, [$patient_id]);
+    $total_notes = $count_result['total'] ?? 0;
+    
+    // Get notes for this patient, ordered by date DESC with pagination
+    $sql = "SELECT * FROM form_narrative_notes WHERE pid = ? ORDER BY date DESC LIMIT ? OFFSET ?";
+    $results = sqlStatement($sql, [$patient_id, $limit, $offset]);
     
     $notes = [];
     while ($row = sqlFetchArray($results)) {
@@ -43,7 +51,11 @@ try {
     
     echo json_encode([
         'success' => true,
-        'data' => $notes
+        'data' => $notes,
+        'total' => $total_notes,
+        'page' => $page,
+        'limit' => $limit,
+        'total_pages' => ceil($total_notes / $limit)
     ]);
     
 } catch (Exception $e) {

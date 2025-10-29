@@ -2221,7 +2221,8 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
             $('#historicalNotesPanel').hide();
         }
         
-        function loadAllNotes() {
+        function loadAllNotes(page) {
+            page = page || 1;
             var csrfToken = $('#narrative_notes_csrf').val();
             var content = $('#historical_notes_content');
             
@@ -2233,30 +2234,32 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                 type: 'GET',
                 data: { 
                     pid: <?php echo $pid; ?>, 
+                    page: page,
+                    limit: 50,
                     csrf_token_form: csrfToken
                 },
                 success: function(response) {
                     if (response.success && response.data && response.data.length > 0) {
                         var html = '<div class="list-group">';
-                        html += '<h6 style="margin-bottom: 15px;"><?php echo xlt('All Notes ('); ?>' + response.data.length + ')</h6>';
+                        html += '<h6 style="margin-bottom: 15px;"><?php echo xlt('All Notes'); ?> (' + (response.total || response.data.length) + ')</h6>';
+                        if (response.total_pages) {
+                            html += '<p class="text-muted" style="margin-bottom: 15px;"><?php echo xlt('Showing page'); ?> ' + response.page + ' <?php echo xlt('of'); ?> ' + response.total_pages + '</p>';
+                        }
                         
                         response.data.forEach(function(note) {
                             var noteDate = new Date(note.date);
-                            var dateStr = noteDate.toLocaleDateString('en-US', { 
+                            var dateStr = noteDate.toLocaleString('en-US', { 
                                 year: 'numeric', 
                                 month: 'long', 
-                                day: 'numeric' 
-                            });
-                            var timeStr = noteDate.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
                             });
                             
                             html += '<div class="card mb-2" style="border-left: 3px solid #007bff;">';
                             html += '<div class="card-body p-3">';
-                            html += '<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">';
+                            html += '<div style="margin-bottom: 10px;">';
                             html += '<strong style="color: #007bff;">' + dateStr + '</strong>';
-                            html += '<small class="text-muted">' + timeStr + '</small>';
                             html += '</div>';
                             html += '<div style="white-space: pre-wrap; background: #f8f9fa; padding: 10px; border-radius: 4px;">' + 
                                     (note.note_content || '<?php echo xlt('No notes for this day.'); ?>') + '</div>';
@@ -2265,6 +2268,36 @@ $oemr_ui = new OemrUI($arrOeUiSettings);
                         });
                         
                         html += '</div>';
+                        
+                        // Add pagination controls if we have page info
+                        if (response.total_pages && response.total_pages > 1) {
+                            html += '<div class="mt-3" style="text-align: center;">';
+                            
+                            // Previous button
+                            if (response.page > 1) {
+                                html += '<button class="btn btn-sm btn-secondary" onclick="loadAllNotes(' + (response.page - 1) + ')">&laquo; <?php echo xlt('Previous'); ?></button> ';
+                            }
+                            
+                            // Page numbers
+                            var startPage = Math.max(1, response.page - 2);
+                            var endPage = Math.min(response.total_pages, response.page + 2);
+                            
+                            for (var i = startPage; i <= endPage; i++) {
+                                if (i === response.page) {
+                                    html += '<button class="btn btn-sm btn-primary" disabled>' + i + '</button> ';
+                                } else {
+                                    html += '<button class="btn btn-sm btn-secondary" onclick="loadAllNotes(' + i + ')">' + i + '</button> ';
+                                }
+                            }
+                            
+                            // Next button
+                            if (response.page < response.total_pages) {
+                                html += '<button class="btn btn-sm btn-secondary" onclick="loadAllNotes(' + (response.page + 1) + ')"><?php echo xlt('Next'); ?> &raquo;</button>';
+                            }
+                            
+                            html += '</div>';
+                        }
+                        
                         content.html(html);
                     } else {
                         content.html('<div class="alert alert-info"><?php echo xlt('No notes found.'); ?></div>');
